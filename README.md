@@ -28,7 +28,7 @@ It's a single self-contained `index.html` file — no build step, no dependencie
 This repo is set up for [GitHub Pages](https://pages.github.com/) — once enabled (Settings → Pages → Deploy from a branch → `main` / `/(root)`), it's live at:
 
 ```
-https://canpamukcu.github.io/chinese-learning-flashcards/
+https://cpamukcu.github.io/chinese-learning-flashcards/
 ```
 
 ---
