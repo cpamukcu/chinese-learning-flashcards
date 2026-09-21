@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { containsChinese, toPinyin, toWordPinyin } from "./pinyin";
+import { containsChinese } from "./chinese";
+import { toPinyin, toWordPinyin } from "./pinyin";
 
 describe("pinyin", () => {
   it("converts a sentence with tone marks and tidy punctuation", () => {

@@ -11,7 +11,10 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { createClient } from "@/lib/supabase/client";
+
+// Loaded on click, not with the page: the Supabase client is ~67 KB of JavaScript
+// that visitors on slow connections shouldn't wait for before they can see the form.
+const loadSupabase = async () => (await import("@/lib/supabase/client")).createClient();
 
 type Status = "idle" | "sending" | "sent" | "error";
 
@@ -58,7 +61,7 @@ export function LoginForm({
     setStatus("sending");
     setMessage(null);
 
-    const { error } = await createClient().auth.signInWithOtp({
+    const { error } = await (await loadSupabase()).auth.signInWithOtp({
       email,
       options: { emailRedirectTo: redirectTo() },
     });
@@ -73,7 +76,7 @@ export function LoginForm({
 
   async function signInWithGoogle() {
     setMessage(null);
-    const { error } = await createClient().auth.signInWithOAuth({
+    const { error } = await (await loadSupabase()).auth.signInWithOAuth({
       provider: "google",
       options: { redirectTo: redirectTo() },
     });

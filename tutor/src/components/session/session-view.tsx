@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Logo } from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
-import { toPinyin } from "@/lib/tutor/pinyin";
 import { getScenario } from "@/lib/tutor/scenarios";
 import type { HskLevel, ScenarioId } from "@/lib/tutor/types";
 import {
@@ -87,6 +86,9 @@ export function SessionView() {
 
   function start(scenario: ScenarioId, level: HskLevel) {
     const cfg = { scenario, level };
+    // Start fetching the pinyin dictionary (~140 KB) in the background while the
+    // tutor's first reply loads; it must not block the page itself.
+    void import("@/lib/tutor/pinyin");
     setConfig(cfg);
     setMessages([]);
     void requestReply([], cfg);
@@ -98,11 +100,19 @@ export function SessionView() {
       id: newId(),
       role: "user",
       text,
-      pinyin: toPinyin(text),
+      pinyin: "",
     };
     const history = [...messages, userMessage];
     setMessages(history);
     void requestReply(history, config);
+
+    // Fill in the learner's own pinyin as soon as the dictionary is ready.
+    void import("@/lib/tutor/pinyin").then(({ toPinyin }) => {
+      const pinyin = toPinyin(text);
+      setMessages((prev) =>
+        prev.map((m) => (m.id === userMessage.id && m.role === "user" ? { ...m, pinyin } : m)),
+      );
+    });
   }
 
   function retry() {

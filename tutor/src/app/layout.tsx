@@ -1,9 +1,8 @@
 import type { Metadata, Viewport } from "next";
-// Fonts are bundled from npm (not fetched from Google at build/run time), so
-// the app works offline and where Google Fonts is slow or blocked. Noto Sans SC
-// is split into unicode-range slices: browsers only download glyphs in use.
+// Latin font bundled from npm (not fetched from Google), so it works offline and
+// where Google Fonts is blocked. Chinese uses the device's own font (see
+// globals.css): downloading a Chinese web font cost ~340 KB per page.
 import "@fontsource-variable/dm-sans";
-import "@fontsource-variable/noto-sans-sc";
 import { site } from "@/lib/site";
 import "./globals.css";
 

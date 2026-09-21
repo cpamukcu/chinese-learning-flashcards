@@ -1,9 +1,4 @@
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+import { ChevronDown } from "lucide-react";
 
 const faqs = [
   {
@@ -28,6 +23,8 @@ const faqs = [
   },
 ];
 
+// Native <details>: keyboard accessible, works without JavaScript, and adds
+// nothing to the page's JS bundle.
 export function Faq() {
   return (
     <section
@@ -37,14 +34,20 @@ export function Faq() {
       <h2 className="text-center text-3xl font-bold tracking-tight sm:text-4xl">
         Questions
       </h2>
-      <Accordion className="mt-8">
+      <div className="mt-8 divide-y divide-border border-y border-border">
         {faqs.map((item) => (
-          <AccordionItem key={item.q} value={item.q}>
-            <AccordionTrigger>{item.q}</AccordionTrigger>
-            <AccordionContent>{item.a}</AccordionContent>
-          </AccordionItem>
+          <details key={item.q} className="group">
+            <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 py-4 text-left text-base font-medium marker:hidden focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none [&::-webkit-details-marker]:hidden">
+              {item.q}
+              <ChevronDown
+                aria-hidden
+                className="size-5 shrink-0 text-muted-foreground transition-transform group-open:rotate-180"
+              />
+            </summary>
+            <p className="pb-4 text-base text-muted-foreground">{item.a}</p>
+          </details>
         ))}
-      </Accordion>
+      </div>
     </section>
   );
 }

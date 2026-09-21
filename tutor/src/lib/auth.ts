@@ -1,4 +1,6 @@
 import "server-only";
+import { cookies } from "next/headers";
+import { ACCESS_COOKIE, getAccessPassword, verifyAccessToken } from "@/lib/access";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
 
@@ -17,6 +19,8 @@ export function isDevAuthBypass() {
   );
 }
 
+const SHARED_USER: AppUser = { id: "shared-access", email: "", name: "Learner" };
+
 const DEV_USER: AppUser = {
   id: "dev-local-user",
   email: "local dev mode",
@@ -26,6 +30,14 @@ const DEV_USER: AppUser = {
 // The signed-in user, or null. Uses getUser() (validated by Supabase).
 export async function getCurrentUser(): Promise<AppUser | null> {
   if (isDevAuthBypass()) return DEV_USER;
+
+  // Shared-password mode (ACCESS_PASSWORD): no Supabase involved.
+  const password = getAccessPassword();
+  if (password) {
+    const token = (await cookies()).get(ACCESS_COOKIE)?.value;
+    return token && (await verifyAccessToken(token, password)) ? SHARED_USER : null;
+  }
+
   if (!isSupabaseConfigured()) return null;
 
   const supabase = await createClient();

@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { ACCESS_COOKIE } from "@/lib/access";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
 
@@ -9,5 +10,7 @@ export async function POST(request: NextRequest) {
     await supabase.auth.signOut();
   }
   // 303 turns the POST into a GET on the landing page.
-  return NextResponse.redirect(new URL("/", request.url), 303);
+  const response = NextResponse.redirect(new URL("/", request.url), 303);
+  response.cookies.delete(ACCESS_COOKIE);
+  return response;
 }

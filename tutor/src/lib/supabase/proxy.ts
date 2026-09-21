@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { ACCESS_COOKIE, getAccessPassword, verifyAccessToken } from "@/lib/access";
 import { getSupabasePublicEnv } from "./env";
 
 // Same rule as isDevAuthBypass() in lib/auth.ts (that file is server-only, so
@@ -17,6 +18,28 @@ export async function updateSession(request: NextRequest) {
     if (request.nextUrl.pathname === "/login") {
       const url = request.nextUrl.clone();
       url.pathname = "/dashboard";
+      return NextResponse.redirect(url);
+    }
+    return NextResponse.next({ request });
+  }
+
+  // Shared-password mode: same gate, decided by the signed cookie.
+  const password = getAccessPassword();
+  if (password) {
+    const token = request.cookies.get(ACCESS_COOKIE)?.value;
+    const signedIn = !!token && (await verifyAccessToken(token, password));
+    const { pathname } = request.nextUrl;
+    const isProtected = PROTECTED_PREFIXES.some((p) => pathname.startsWith(p));
+    if (!signedIn && isProtected) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      url.search = "";
+      return NextResponse.redirect(url);
+    }
+    if (signedIn && pathname === "/login") {
+      const url = request.nextUrl.clone();
+      url.pathname = "/dashboard";
+      url.search = "";
       return NextResponse.redirect(url);
     }
     return NextResponse.next({ request });

@@ -6,13 +6,8 @@ export function containsChinese(text: string): boolean {
   return CJK.test(text);
 }
 
-// Explanations and translations quote Chinese words ("米饭 is one word"), so
-// text only counts as "not English" when Chinese characters outnumber Latin letters.
-export function isMostlyChinese(text: string): boolean {
-  const han = (text.match(/[\u3400-\u9fff]/g) ?? []).length;
-  const latin = (text.match(/[A-Za-z]/g) ?? []).length;
-  return han > latin;
-}
+// Heavy: pulls in pinyin-pro's dictionary. Browser code should load this module
+// with a dynamic import() so it never blocks the initial page.
 
 // Word-level pinyin without spaces, for vocabulary chips: "米饭" → "mǐfàn"
 export function toWordPinyin(text: string): string {

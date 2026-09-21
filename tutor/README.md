@@ -4,7 +4,7 @@ Practice spoken Mandarin daily with an AI voice tutor. Working name; change it i
 
 **Status: Milestone 2 (text tutor).** Landing page, Supabase auth (email magic link + Google), a dashboard shell, and a typed-chat tutor at `/session`. The voice loop, persistence and habit tracking arrive in Milestones 3–5. The full brief is in `CHINESE_AI_TUTOR_SPEC.md`.
 
-Stack: Next.js (App Router) · TypeScript strict · Tailwind CSS v4 · shadcn/ui · Supabase Auth · Noto Sans SC.
+Stack: Next.js (App Router) · TypeScript strict · Tailwind CSS v4 · shadcn/ui · Supabase Auth · system Chinese fonts (see Performance).
 
 > This app lives in `tutor/`. The single-file flashcard app in the repo root is separate and untouched.
 
@@ -86,6 +86,54 @@ Log in, click **Start today's session** (or open `/session`), pick a scenario an
 3. In `tutor/.env.local` set `TUTOR_PROVIDER=ollama`, then restart `npm run dev`.
 
 The first reply after starting is slow while the model loads into memory. On a 16 GB+ Mac, `OLLAMA_MODEL=qwen2.5:7b` (about 4.7 GB) is noticeably better at spotting mistakes. Small local models are weaker than Claude at corrections, so judge them with that in mind. Note: the 3B Qwen model is licensed for non-commercial use.
+
+## Performance and use in China
+
+**Performance (measured on a production build, landing page, gzipped):** 207 KB total, down from 592 KB. Chinese text uses each device's built-in font instead of a downloaded web font (about 340 KB saved); the pinyin dictionary (about 135 KB) loads in the background only after a chat starts; the FAQ uses native `<details>` (no JavaScript). The page requests nothing from any outside host.
+
+**Making it work in mainland China, no VPN.** Nothing in the browser bundle depends on a blocked service. What blocks access is the services around it, and each has a China-friendly setting:
+
+| Piece | Problem in mainland China | What to use (already built in) |
+|---|---|---|
+| Login (Supabase, Google) | supabase.co and Google are unreliable or blocked | `ACCESS_PASSWORD`: one shared password, no third party |
+| Tutor model (Claude) | Not available in China, and Hong Kong isn't a supported region either | `TUTOR_PROVIDER=openai-compatible` with a Chinese model API (below) |
+| Hosting (Vercel, GitHub Pages, Cloudflare) | Slow, unreliable or blocked | Your own server in Hong Kong (below) |
+| Voice (Milestone 3) | Chrome's built-in speech recognition uses Google servers | Not built yet; will need a Chinese speech provider (iFlytek, Alibaba, Tencent) |
+
+### Login modes
+
+Chosen by which variable is set, in this order: `DEV_SKIP_AUTH=true` (dev only, ignored in production) → `ACCESS_PASSWORD` (shared password, 8+ characters) → Supabase email/Google. Everyone using the password shares one identity, which is fine for you and a few friends. Changing the password logs everyone out. Wrong guesses are rate-limited (8 per IP per 15 minutes).
+
+### A tutor model that works in China
+
+Set `TUTOR_PROVIDER=openai-compatible` and three variables. Any provider with an "OpenAI-compatible" API works:
+
+| Provider | `LLM_BASE_URL` | Example `LLM_MODEL` |
+|---|---|---|
+| Zhipu (GLM) | `https://open.bigmodel.cn/api/paas/v4` (the default) | `glm-4-flash` |
+| DeepSeek | `https://api.deepseek.com` | `deepseek-chat` |
+| Alibaba Qwen | `https://dashscope.aliyuncs.com/compatible-mode/v1` | `qwen-plus` |
+| Moonshot Kimi | `https://api.moonshot.cn/v1` | `moonshot-v1-8k` |
+
+Free tiers, prices and sign-up rules change, so check each provider's current terms. The correction check runs as a second focused call to the same model.
+
+### Deploying on a Hong Kong server
+
+A server in Hong Kong is reachable from mainland China without an ICP filing (a mainland server needs one). On any small Linux VPS (Alibaba Cloud, Tencent Cloud and others have Hong Kong regions):
+
+```bash
+# once: install Node 20+ and git, then
+git clone <your repo> && cd <repo>/tutor
+npm ci && npm run build
+```
+
+Create `.env.production` next to `package.json` with `ACCESS_PASSWORD`, `TUTOR_PROVIDER=openai-compatible`, `LLM_API_KEY` (and the other variables above), then run it and keep it alive:
+
+```bash
+PORT=80 npm run start        # or use pm2 / systemd to keep it running
+```
+
+Open port 80 (and 443 if you add HTTPS) in the provider's firewall. A domain plus HTTPS (for example with Caddy) is recommended: the login cookie is marked `Secure` automatically when the site is served over HTTPS, and the microphone in Milestone 3 requires HTTPS. Without a domain the site works over plain HTTP by IP address.
 
 ## Tests
 

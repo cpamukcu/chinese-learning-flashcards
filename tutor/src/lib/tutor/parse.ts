@@ -1,9 +1,5 @@
-import {
-  containsChinese,
-  isMostlyChinese,
-  toPinyin,
-  toWordPinyin,
-} from "./pinyin";
+import { containsChinese, isMostlyChinese } from "./chinese";
+import { toPinyin, toWordPinyin } from "./pinyin";
 import type { TutorCorrection, TutorNewWord, TutorReply } from "./types";
 
 export class TutorParseError extends Error {

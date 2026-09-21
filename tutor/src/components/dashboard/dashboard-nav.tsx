@@ -34,9 +34,11 @@ export function DashboardNav({ email }: { email: string }) {
           </nav>
 
           <div className="flex items-center gap-3">
-            <span className="hidden max-w-[12rem] truncate text-sm text-muted-foreground md:block">
-              {email}
-            </span>
+            {email && (
+              <span className="hidden max-w-[12rem] truncate text-sm text-muted-foreground md:block">
+                {email}
+              </span>
+            )}
             <form action="/auth/signout" method="post">
               <Button type="submit" variant="outline" size="sm">
                 Sign out

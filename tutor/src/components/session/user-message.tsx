@@ -1,4 +1,4 @@
-import { containsChinese } from "@/lib/tutor/pinyin";
+import { containsChinese } from "@/lib/tutor/chinese";
 import { CorrectionCard, NoCorrection } from "./correction-card";
 import type { UserMessage as UserMessageData } from "./api";
 import type { Display } from "./display-toggles";
