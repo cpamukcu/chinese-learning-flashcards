@@ -1,5 +1,6 @@
 import { Check } from "lucide-react";
 import Link from "next/link";
+import { startHref } from "@/lib/site";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -52,7 +53,7 @@ export function Pricing() {
               ))}
             </ul>
             <Link
-              href="/login"
+              href={startHref}
               className={buttonVariants({ size: "lg", className: "w-full" })}
             >
               Start speaking free

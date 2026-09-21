@@ -1,5 +1,6 @@
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { startHref } from "@/lib/site";
 import { buttonVariants } from "@/components/ui/button";
 import { ChatPreview } from "./chat-preview";
 
@@ -19,7 +20,7 @@ export function Hero() {
         </p>
         <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center lg:justify-start">
           <Link
-            href="/login"
+            href={startHref}
             className={buttonVariants({
               size: "lg",
               className: "w-full sm:w-auto",

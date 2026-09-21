@@ -1,4 +1,5 @@
 import { BookOpen, Home, Settings } from "lucide-react";
+import { IS_STATIC } from "@/lib/static-mode";
 import { Logo } from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
 
@@ -39,11 +40,13 @@ export function DashboardNav({ email }: { email: string }) {
                 {email}
               </span>
             )}
-            <form action="/auth/signout" method="post">
-              <Button type="submit" variant="outline" size="sm">
-                Sign out
-              </Button>
-            </form>
+            {!IS_STATIC && (
+              <form action="/auth/signout" method="post">
+                <Button type="submit" variant="outline" size="sm">
+                  Sign out
+                </Button>
+              </form>
+            )}
           </div>
         </div>
       </header>

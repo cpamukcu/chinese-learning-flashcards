@@ -1,3 +1,5 @@
+import { IS_STATIC } from "@/lib/static-mode";
+
 // Working name — branding is undecided (spec §13). Change it here only.
 export const site = {
   name: "说说",
@@ -6,3 +8,6 @@ export const site = {
   description:
     "Practice spoken Mandarin daily with an AI voice tutor that listens, replies, and gently corrects you. Ten minutes a day, HSK 1–4.",
 } as const;
+
+// The static edition has no login, so "Start" goes straight to the tutor.
+export const startHref = IS_STATIC ? "/session" : "/login";

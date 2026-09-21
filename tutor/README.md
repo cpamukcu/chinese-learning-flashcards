@@ -135,6 +135,24 @@ PORT=80 npm run start        # or use pm2 / systemd to keep it running
 
 Open port 80 (and 443 if you add HTTPS) in the provider's firewall. A domain plus HTTPS (for example with Caddy) is recommended: the login cookie is marked `Secure` automatically when the site is served over HTTPS, and the microphone in Milestone 3 requires HTTPS. Without a domain the site works over plain HTTP by IP address.
 
+## Static edition on GitHub Pages (no server)
+
+The same tutor also builds as plain files, hosted free on GitHub Pages at
+`https://cpamukcu.github.io/chinese-learning-flashcards/app/` (next to the flashcard app).
+
+Because GitHub Pages has no server, this edition has **no login and no shared model key**. The chat runs in each visitor's browser and calls the model provider directly, using **the visitor's own** key (Zhipu, DeepSeek, Qwen, Kimi or any OpenAI-compatible API) or their own local Ollama. The key is stored only in that browser's localStorage and sent only to the provider they chose. Never put your own key in this site: everything on GitHub Pages is public.
+
+Rebuild after changing the code, then commit the `app/` folder and push:
+
+```bash
+npm run build:static      # from the repo root or from tutor/
+git add app .nojekyll && git commit -m "Update static site" && git push
+```
+
+`scripts/build-static.mjs` builds a copy of the source with the server-only parts (login, `/api`, proxy) removed, so your real source is never touched. The four providers above were checked to allow browser calls from `cpamukcu.github.io` (CORS). Ollama blocks other websites by default; allow it once on a Mac with `launchctl setenv OLLAMA_ORIGINS "https://cpamukcu.github.io"` and reopen Ollama (Chrome, Edge and Firefox only; Safari blocks it).
+
+Limits: `github.io` is slow or blocked on some networks in mainland China, and there is no server-side rate limiting, so each visitor's own key pays for their own use.
+
 ## Tests
 
 ```bash

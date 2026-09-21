@@ -1,3 +1,7 @@
+import { IS_STATIC } from "@/lib/static-mode";
+import { TutorProviderError } from "@/lib/tutor/errors";
+import { loadModelSettings } from "@/lib/tutor/model-settings";
+import { parseTutorRequest } from "@/lib/tutor/request";
 import type {
   ChatTurn,
   HskLevel,
@@ -40,12 +44,51 @@ export class TutorRequestError extends Error {
   }
 }
 
+// Static edition (GitHub Pages): no server, so the turn runs right here in the
+// browser against the provider the visitor configured. The heavy pinyin and
+// tutor code is loaded on demand.
+async function runInBrowser(
+  turns: ChatTurn[],
+  scenario: ScenarioId,
+  level: HskLevel,
+): Promise<TutorReply> {
+  const parsed = parseTutorRequest({ messages: turns, scenario, level });
+  if (!parsed.ok) throw new TutorRequestError(parsed.error, 400);
+
+  try {
+    const [{ runBrowserTurn }, { TutorParseError }] = await Promise.all([
+      import("@/lib/tutor/browser-provider"),
+      import("@/lib/tutor/parse"),
+    ]);
+    try {
+      return await runBrowserTurn(parsed.value, loadModelSettings());
+    } catch (error) {
+      if (error instanceof TutorParseError) {
+        throw new TutorRequestError("The tutor's reply was garbled. Please try again.", 502);
+      }
+      throw error;
+    }
+  } catch (error) {
+    if (error instanceof TutorRequestError) throw error;
+    if (error instanceof TutorProviderError) {
+      throw new TutorRequestError(error.message, error.status);
+    }
+    throw new TutorRequestError("Something went wrong. Please try again.", 500);
+  }
+}
+
 export async function fetchTutorReply(
   turns: ChatTurn[],
   scenario: ScenarioId,
   level: HskLevel,
   signal?: AbortSignal,
 ): Promise<TutorReply> {
+  if (IS_STATIC) {
+    const reply = await runInBrowser(turns, scenario, level);
+    signal?.throwIfAborted();
+    return reply;
+  }
+
   let response: Response;
   try {
     response = await fetch("/api/tutor", {
