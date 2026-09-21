@@ -7,11 +7,28 @@ export interface ProviderPreset {
   baseUrl: string;
   model: string;
   signupUrl: string;
+  // Short help shown under the provider picker.
+  note?: string;
+  // Show the model box so it can be changed (free model lists change often).
+  editableModel?: boolean;
+  // Minimum max_tokens per request. Models that "think" first spend part of the
+  // limit on thinking, which would otherwise leave the answer cut off.
+  minMaxTokens?: number;
 }
 
 export const CUSTOM_PRESET_ID = "custom";
 
 export const PROVIDER_PRESETS: readonly ProviderPreset[] = [
+  {
+    id: "openrouter",
+    label: "OpenRouter (free models)",
+    baseUrl: "https://openrouter.ai/api/v1",
+    model: "qwen/qwen3.8-27b:free",
+    signupUrl: "https://openrouter.ai/keys",
+    note: "Free account, no card. Free models allow about 50 requests a day (roughly 25 chat turns) and the list changes: if this model stops working, pick another ending in :free at openrouter.ai/models.",
+    editableModel: true,
+    minMaxTokens: 2000,
+  },
   {
     id: "zhipu",
     label: "Zhipu GLM-4-Flash (free tier)",

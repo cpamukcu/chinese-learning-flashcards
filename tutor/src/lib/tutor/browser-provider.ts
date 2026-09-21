@@ -2,6 +2,7 @@ import { createOllamaChat } from "./ollama";
 import type { ModelSettings } from "./model-settings";
 import { createOpenAICompatibleChat } from "./openai-compatible";
 import { runPipelineTurn } from "./pipeline";
+import { getPreset } from "./providers";
 import type { TutorReply, TutorRequest } from "./types";
 
 // One tutor turn, run entirely in the visitor's browser (static edition).
@@ -21,6 +22,7 @@ export function runBrowserTurn(
           baseUrl: settings.baseUrl.trim(),
           model: settings.model.trim(),
           apiKey: settings.apiKey.trim(),
+          minMaxTokens: getPreset(settings.presetId)?.minMaxTokens,
         });
   return runPipelineTurn(request, chat);
 }

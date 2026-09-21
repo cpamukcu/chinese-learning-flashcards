@@ -1,6 +1,7 @@
 "use client";
 
-import { ExternalLink } from "lucide-react";
+import { Eye, EyeOff, ExternalLink } from "lucide-react";
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -25,6 +26,9 @@ export function ModelSettings({
 }) {
   const preset = getPreset(value.presetId);
   const isCustom = value.presetId === CUSTOM_PRESET_ID;
+  const showModel = isCustom || preset?.editableModel;
+  // Lets people check a pasted key, which is fiddly to get right on a phone.
+  const [showKey, setShowKey] = useState(false);
 
   return (
     <section aria-labelledby="model-heading" className="space-y-3">
@@ -79,6 +83,9 @@ export function ModelSettings({
               ))}
               <option value={CUSTOM_PRESET_ID}>Other (OpenAI-compatible)</option>
             </select>
+            {preset?.note && (
+              <p className="text-sm text-muted-foreground">{preset.note}</p>
+            )}
             {preset && (
               <a
                 href={preset.signupUrl}
@@ -94,42 +101,57 @@ export function ModelSettings({
 
           <div className="space-y-1.5">
             <Label htmlFor="api-key">API key</Label>
-            <Input
-              id="api-key"
-              type="password"
-              autoComplete="off"
-              spellCheck={false}
-              placeholder="Paste your key"
-              value={value.apiKey}
-              onChange={(e) => onChange({ ...value, apiKey: e.target.value })}
-              className="h-11 text-base"
-            />
+            <div className="flex gap-2">
+              <Input
+                id="api-key"
+                type={showKey ? "text" : "password"}
+                autoComplete="off"
+                autoCapitalize="off"
+                autoCorrect="off"
+                spellCheck={false}
+                placeholder="Paste your key"
+                value={value.apiKey}
+                onChange={(e) => onChange({ ...value, apiKey: e.target.value })}
+                className="h-11 min-w-0 flex-1 text-base"
+              />
+              <button
+                type="button"
+                onClick={() => setShowKey((v) => !v)}
+                aria-label={showKey ? "Hide key" : "Show key"}
+                aria-pressed={showKey}
+                className="grid size-11 shrink-0 place-items-center rounded-lg border border-input bg-background text-muted-foreground hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+              >
+                {showKey ? <EyeOff className="size-5" aria-hidden /> : <Eye className="size-5" aria-hidden />}
+              </button>
+            </div>
           </div>
 
           {isCustom && (
-            <>
-              <div className="space-y-1.5">
-                <Label htmlFor="base-url">Address (base URL)</Label>
-                <Input
-                  id="base-url"
-                  inputMode="url"
-                  spellCheck={false}
-                  value={value.baseUrl}
-                  onChange={(e) => onChange({ ...value, baseUrl: e.target.value })}
-                  className="h-11 text-base"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="model">Model</Label>
-                <Input
-                  id="model"
-                  spellCheck={false}
-                  value={value.model}
-                  onChange={(e) => onChange({ ...value, model: e.target.value })}
-                  className="h-11 text-base"
-                />
-              </div>
-            </>
+            <div className="space-y-1.5">
+              <Label htmlFor="base-url">Address (base URL)</Label>
+              <Input
+                id="base-url"
+                inputMode="url"
+                spellCheck={false}
+                value={value.baseUrl}
+                onChange={(e) => onChange({ ...value, baseUrl: e.target.value })}
+                className="h-11 text-base"
+              />
+            </div>
+          )}
+          {showModel && (
+            <div className="space-y-1.5">
+              <Label htmlFor="model">Model</Label>
+              <Input
+                id="model"
+                autoCapitalize="off"
+                autoCorrect="off"
+                spellCheck={false}
+                value={value.model}
+                onChange={(e) => onChange({ ...value, model: e.target.value })}
+                className="h-11 text-base"
+              />
+            </div>
           )}
         </div>
       ) : (

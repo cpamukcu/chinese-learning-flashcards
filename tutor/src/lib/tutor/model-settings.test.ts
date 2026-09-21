@@ -70,6 +70,20 @@ describe("withPreset", () => {
   });
 });
 
+describe("OpenRouter preset", () => {
+  it("is the default for new visitors and fills in its address, model and floor", async () => {
+    const { getPreset } = await import("./providers");
+    expect(DEFAULT_MODEL_SETTINGS.presetId).toBe("openrouter");
+    const preset = getPreset("openrouter");
+    expect(preset?.baseUrl).toBe("https://openrouter.ai/api/v1");
+    expect(preset?.model).toMatch(/:free$/);
+    expect(preset?.editableModel).toBe(true);
+    expect(preset?.minMaxTokens).toBeGreaterThanOrEqual(1000);
+    expect(withPreset(DEFAULT_MODEL_SETTINGS, "zhipu").baseUrl).toBe("https://open.bigmodel.cn/api/paas/v4");
+    expect(withPreset({ ...DEFAULT_MODEL_SETTINGS, presetId: "zhipu" }, "openrouter").model).toBe(preset?.model);
+  });
+});
+
 describe("isUsable", () => {
   const withKey = { ...DEFAULT_MODEL_SETTINGS, apiKey: "k" };
 

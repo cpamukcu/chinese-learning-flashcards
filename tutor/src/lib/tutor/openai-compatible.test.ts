@@ -117,3 +117,35 @@ describe("runOpenAICompatibleTurn", () => {
     expect(result.correction?.original).toBe("我想买衣服一件");
   });
 });
+
+describe("OpenRouter-style needs", () => {
+  it("raises max_tokens to the preset floor so 'thinking' models aren't cut off", async () => {
+    const { createOpenAICompatibleChat } = await import("./openai-compatible");
+    const fetchMock = vi.fn(async () => completion(JSON.stringify({ ok: true })));
+    vi.stubGlobal("fetch", fetchMock);
+    const chat = createOpenAICompatibleChat({
+      baseUrl: "https://openrouter.ai/api/v1",
+      apiKey: "k",
+      model: "qwen/qwen3.8-27b:free",
+      minMaxTokens: 2000,
+    });
+    await chat([{ role: "system", content: "s" }], {}, { temperature: 0, maxTokens: 200 });
+    const body = JSON.parse((fetchMock.mock.calls[0] as unknown as [string, { body: string }])[1].body);
+    expect(body.max_tokens).toBe(2000);
+    // and never lowers a bigger request
+    await chat([{ role: "system", content: "s" }], {}, { temperature: 0, maxTokens: 5000 });
+    expect(JSON.parse((fetchMock.mock.calls[1] as unknown as [string, { body: string }])[1].body).max_tokens).toBe(5000);
+  });
+
+  it("tells the user when the daily free limit is used up", async () => {
+    vi.stubEnv("LLM_API_KEY", "k");
+    stub(() => new Response('{"error":{"message":"Rate limit exceeded: free-models-per-day"}}', { status: 429 }));
+    await expect(runOpenAICompatibleTurn(request)).rejects.toMatchObject({ code: "llm_daily_limit" });
+  });
+
+  it("still calls an ordinary 429 'busy'", async () => {
+    vi.stubEnv("LLM_API_KEY", "k");
+    stub(() => new Response('{"error":"slow down"}', { status: 429 }));
+    await expect(runOpenAICompatibleTurn(request)).rejects.toMatchObject({ code: "llm_rate_limited" });
+  });
+});

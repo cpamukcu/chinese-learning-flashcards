@@ -16,6 +16,8 @@ export interface OpenAICompatibleConfig {
   baseUrl: string;
   apiKey: string;
   model: string;
+  // Floor for max_tokens, for models that spend tokens "thinking" first.
+  minMaxTokens?: number;
 }
 
 // Builds a ChatFn for one provider. Used by the server (config from env) and by
@@ -49,7 +51,7 @@ export function createOpenAICompatibleChat(config: OpenAICompatibleConfig): Chat
           model,
           messages: withSchema,
           temperature,
-          max_tokens: maxTokens,
+          max_tokens: Math.max(maxTokens, config.minMaxTokens ?? 0),
           stream: false,
           response_format: { type: "json_object" },
         }),
@@ -76,6 +78,13 @@ export function createOpenAICompatibleChat(config: OpenAICompatibleConfig): Chat
           "The model account is out of quota or credit. Check your provider's billing page.",
           "llm_no_credit",
           402,
+        );
+      }
+      if (response.status === 429 && /per-day|daily|per day/i.test(detail)) {
+        throw new TutorProviderError(
+          "You've used up today's free limit for this model. Try again tomorrow, or pick another model or provider.",
+          "llm_daily_limit",
+          429,
         );
       }
       if (response.status === 429) {
