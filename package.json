@@ -1,0 +1,12 @@
+{
+  "name": "chinese-learning-app",
+  "private": true,
+  "description": "Root shortcuts: the tutor app lives in ./tutor",
+  "scripts": {
+    "dev": "npm --prefix tutor run dev",
+    "build": "npm --prefix tutor run build",
+    "start": "npm --prefix tutor run start",
+    "lint": "npm --prefix tutor run lint",
+    "test": "npm --prefix tutor run test"
+  }
+}
