@@ -1,0 +1,91 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+/* Light theme only: `dark:` utilities in shadcn components stay inert. */
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  /* Chinese uses each device's built-in CJK font: instant, zero download, and
+     every phone/PC in China has a good one. DM Sans has no CJK glyphs, so
+     Chinese characters fall through to this list. */
+  --font-cjk: "PingFang SC", "HarmonyOS Sans SC", "Hiragino Sans GB",
+    "Microsoft YaHei", "Noto Sans CJK SC", "Noto Sans SC", "Source Han Sans SC",
+    "WenQuanYi Micro Hei";
+  --font-sans: "DM Sans Variable", var(--font-cjk), ui-sans-serif, system-ui,
+    sans-serif;
+  --font-heading: var(--font-sans);
+  --font-zh: var(--font-cjk), ui-sans-serif, system-ui, sans-serif;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/* Warm paper background, ink text, vermilion (朱红) accent. Light theme only. */
+:root {
+  --background: #fbf7f0;
+  --foreground: #2a211c;
+  --card: #ffffff;
+  --card-foreground: #2a211c;
+  --popover: #ffffff;
+  --popover-foreground: #2a211c;
+  --primary: #c9371f; /* vermilion; 5.2:1 against white text */
+  --primary-foreground: #ffffff;
+  --secondary: #f3e9dc;
+  --secondary-foreground: #2a211c;
+  --muted: #f3ece2;
+  --muted-foreground: #6f625a;
+  --accent: #fbe6df;
+  --accent-foreground: #8f2411;
+  --destructive: #b42318;
+  --border: #e9dfd2;
+  --input: #dccfbe;
+  --ring: #c9371f;
+  --radius: 0.875rem;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+    color-scheme: light;
+  }
+  body {
+    @apply bg-background text-foreground;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+@layer utilities {
+  /* Explicit Chinese type: larger and looser than Latin body text. */
+  .font-zh {
+    font-family: var(--font-zh);
+    letter-spacing: 0.02em;
+  }
+}
