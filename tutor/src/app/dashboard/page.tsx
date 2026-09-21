@@ -4,6 +4,7 @@ import { RecentSessions } from "@/components/dashboard/recent-sessions";
 import { StartSession } from "@/components/dashboard/start-session";
 import { StreakCard } from "@/components/dashboard/streak-card";
 import { getCurrentUser } from "@/lib/auth";
+import { IS_STATIC } from "@/lib/static-mode";
 
 export const metadata: Metadata = { title: "Today" };
 
@@ -13,7 +14,7 @@ const DAILY_GOAL_MINUTES = 10;
 const STREAK_DAYS = 0;
 
 export default async function DashboardPage() {
-  const user = await getCurrentUser();
+  const user = IS_STATIC ? null : await getCurrentUser();
   const name = user?.name ?? "there";
 
   return (

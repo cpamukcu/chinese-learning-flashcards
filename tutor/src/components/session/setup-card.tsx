@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import {
   DEFAULT_LEVEL,
@@ -13,8 +13,13 @@ import { cn } from "@/lib/utils";
 
 export function SetupCard({
   onStart,
+  extra,
+  canStart = true,
 }: {
   onStart: (scenario: ScenarioId, level: HskLevel) => void;
+  // Extra section shown above the Start button (model settings in the static edition).
+  extra?: ReactNode;
+  canStart?: boolean;
 }) {
   const [scenario, setScenario] = useState<ScenarioId>(DEFAULT_SCENARIO);
   const [level, setLevel] = useState<HskLevel>(DEFAULT_LEVEL);
@@ -89,9 +94,21 @@ export function SetupCard({
         </p>
       </section>
 
-      <Button size="lg" className="w-full" onClick={() => onStart(scenario, level)}>
+      {extra}
+
+      <Button
+        size="lg"
+        className="w-full"
+        disabled={!canStart}
+        onClick={() => onStart(scenario, level)}
+      >
         Start conversation
       </Button>
+      {!canStart && (
+        <p className="-mt-4 text-center text-sm text-muted-foreground">
+          Add your model details above to start.
+        </p>
+      )}
     </div>
   );
 }

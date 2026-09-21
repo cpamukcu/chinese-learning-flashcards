@@ -4,6 +4,14 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Logo } from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
+import { IS_STATIC } from "@/lib/static-mode";
+import {
+  DEFAULT_MODEL_SETTINGS,
+  isUsable,
+  loadModelSettings,
+  saveModelSettings,
+  type ModelSettings as Settings,
+} from "@/lib/tutor/model-settings";
 import { getScenario } from "@/lib/tutor/scenarios";
 import type { HskLevel, ScenarioId } from "@/lib/tutor/types";
 import {
@@ -14,6 +22,7 @@ import {
   type UserMessage as UserMessageData,
 } from "./api";
 import { ChatInput } from "./chat-input";
+import { ModelSettings } from "./model-settings";
 import { DisplayToggles, toggleDisplay, type Display } from "./display-toggles";
 import { SetupCard } from "./setup-card";
 import { TutorMessage } from "./tutor-message";
@@ -34,6 +43,19 @@ export function SessionView() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [display, setDisplay] = useState<Display>({ zh: true, pinyin: true, en: true });
+
+  // Static edition only: which model answers (saved in this browser).
+  const [settings, setSettings] = useState<Settings>(DEFAULT_MODEL_SETTINGS);
+  useEffect(() => {
+    // localStorage only exists in the browser, so it is read after hydration
+    // (reading it during render would not match the pre-rendered HTML).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (IS_STATIC) setSettings(loadModelSettings());
+  }, []);
+  function updateSettings(next: Settings) {
+    setSettings(next);
+    saveModelSettings(next);
+  }
 
   const abortRef = useRef<AbortController | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -142,7 +164,15 @@ export function SessionView() {
             </Button>
           </div>
         </header>
-        <SetupCard onStart={start} />
+        <SetupCard
+          onStart={start}
+          canStart={!IS_STATIC || isUsable(settings)}
+          extra={
+            IS_STATIC ? (
+              <ModelSettings value={settings} onChange={updateSettings} />
+            ) : null
+          }
+        />
       </div>
     );
   }
@@ -211,9 +241,16 @@ export function SessionView() {
               className="flex flex-col items-start gap-2 rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
             >
               <p>{error}</p>
-              <Button variant="outline" size="sm" onClick={retry}>
-                Try again
-              </Button>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={retry}>
+                  Try again
+                </Button>
+                {IS_STATIC && (
+                  <Button variant="outline" size="sm" onClick={() => setConfig(null)}>
+                    Change model settings
+                  </Button>
+                )}
+              </div>
             </div>
           )}
           <div ref={bottomRef} />

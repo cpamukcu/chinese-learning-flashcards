@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { Logo } from "@/components/brand/logo";
+import { IS_STATIC } from "@/lib/static-mode";
+import { startHref } from "@/lib/site";
 import { buttonVariants } from "@/components/ui/button";
 
 const links = [
@@ -25,12 +27,14 @@ export function SiteHeader() {
           ))}
         </nav>
         <div className="flex items-center gap-2">
-          <Link href="/login" className={buttonVariants({ variant: "ghost" })}>
-            Log in
-          </Link>
+          {!IS_STATIC && (
+            <Link href="/login" className={buttonVariants({ variant: "ghost" })}>
+              Log in
+            </Link>
+          )}
           <Link
-            href="/login"
-            className={buttonVariants({ className: "hidden sm:inline-flex" })}
+            href={startHref}
+            className={buttonVariants({ className: IS_STATIC ? "" : "hidden sm:inline-flex" })}
           >
             Start free
           </Link>

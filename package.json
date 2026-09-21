@@ -7,6 +7,7 @@
     "build": "npm --prefix tutor run build",
     "start": "npm --prefix tutor run start",
     "lint": "npm --prefix tutor run lint",
-    "test": "npm --prefix tutor run test"
+    "test": "npm --prefix tutor run test",
+    "build:static": "npm --prefix tutor run build:static"
   }
 }
