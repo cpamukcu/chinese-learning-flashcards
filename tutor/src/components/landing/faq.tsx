@@ -7,7 +7,7 @@ const faqs = [
   },
   {
     q: "Is my voice recorded?",
-    a: "We don't store raw audio by default. Only the text of your conversations is saved so you can review it later, and you'll be able to delete all of your data at any time.",
+    a: "This site never receives or stores your audio. When you tap the mic, your browser's own speech service (Google's in Chrome, Apple's in Safari) turns your voice into text, and only that text is used. You can always type instead.",
   },
   {
     q: "What do I need to use it?",

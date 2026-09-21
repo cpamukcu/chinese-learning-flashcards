@@ -2,7 +2,7 @@
 
 Practice spoken Mandarin daily with an AI voice tutor. Working name; change it in [`src/lib/site.ts`](src/lib/site.ts).
 
-**Status: Milestone 2 (text tutor).** Landing page, Supabase auth (email magic link + Google), a dashboard shell, and a typed-chat tutor at `/session`. The voice loop, persistence and habit tracking arrive in Milestones 3–5. The full brief is in `CHINESE_AI_TUTOR_SPEC.md`.
+**Status: Milestone 3 (voice).** Landing page, login, a dashboard shell, and a tutor at `/session` you can talk to or type to, with spoken replies. Persistence and habit tracking (streaks, history) arrive in Milestones 4–5. The full brief is in `CHINESE_AI_TUTOR_SPEC.md`.
 
 Stack: Next.js (App Router) · TypeScript strict · Tailwind CSS v4 · shadcn/ui · Supabase Auth · system Chinese fonts (see Performance).
 
@@ -152,6 +152,19 @@ git add app .nojekyll && git commit -m "Update static site" && git push
 `scripts/build-static.mjs` builds a copy of the source with the server-only parts (login, `/api`, proxy) removed, so your real source is never touched. The four providers above were checked to allow browser calls from `cpamukcu.github.io` (CORS). Ollama blocks other websites by default; allow it once on a Mac with `launchctl setenv OLLAMA_ORIGINS "https://cpamukcu.github.io"` and reopen Ollama (Chrome, Edge and Firefox only; Safari blocks it).
 
 Limits: `github.io` is slow or blocked on some networks in mainland China, and there is no server-side rate limiting, so each visitor's own key pays for their own use.
+
+## Voice (Milestone 3)
+
+Tap the mic in a session, speak Mandarin, and pause: what was heard is sent like a typed message and the tutor's reply is spoken back. Each tutor message has a replay button, and the **Voice** and **Slow** toggles control spoken replies and their speed (remembered in the browser).
+
+This uses the speech built into the browser (Web Speech API), so it's free and needs no keys:
+
+| | How it works | Caveats |
+|---|---|---|
+| Listening | Chrome/Edge send audio to Google's speech service, Safari to Apple's. This site never receives or stores audio. | Firefox has no speech recognition. In mainland China Chrome's service is usually unreachable, so typing always stays available and the app says so. Needs HTTPS (or localhost) for the microphone. |
+| Speaking | The device's installed Chinese voice, works offline. | Voice quality depends on the device. On iPhone the first speech is unlocked by the tap on Start, since Safari blocks speech that doesn't start from a tap. |
+
+The spec's `VoiceProvider` interface (`src/lib/voice/types.ts`) is kept for recorded-audio providers (a future server-side or paid speech provider such as iFlytek, Alibaba or Tencent, which would also work in China). The browser recogniser never exposes audio, so it has its own small layer in `src/lib/voice/browser-speech.ts`.
 
 ## Tests
 
