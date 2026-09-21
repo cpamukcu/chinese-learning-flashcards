@@ -89,3 +89,27 @@
     letter-spacing: 0.02em;
   }
 }
+
+/* Live "listening" bars in the mic button. Static for people who prefer reduced motion. */
+@keyframes voice-bar {
+  0%,
+  100% {
+    transform: scaleY(0.35);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+@layer utilities {
+  .voice-bar {
+    animation: voice-bar 0.9s ease-in-out infinite;
+    transform-origin: center;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .voice-bar {
+      animation: none;
+      transform: scaleY(0.7);
+    }
+  }
+}

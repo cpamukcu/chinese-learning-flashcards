@@ -7,7 +7,7 @@ export function StartSession() {
     <div className="rounded-2xl border border-primary/30 bg-accent/50 p-5 text-center sm:p-6">
       <h2 className="text-xl font-semibold">Ready to talk?</h2>
       <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
-        Chat with your tutor by typing for now. Voice arrives in the next milestone.
+        Speak with your tutor: tap the mic and talk, or type if you prefer.
       </p>
       <Link
         href="/session"

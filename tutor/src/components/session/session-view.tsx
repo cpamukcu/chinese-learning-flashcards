@@ -14,6 +14,13 @@ import {
 } from "@/lib/tutor/model-settings";
 import { getScenario } from "@/lib/tutor/scenarios";
 import type { HskLevel, ScenarioId } from "@/lib/tutor/types";
+import { speak, stopSpeaking, unlockSpeech } from "@/lib/voice/browser-speech";
+import {
+  DEFAULT_VOICE_PREFERENCES,
+  loadVoicePreferences,
+  saveVoicePreferences,
+  type VoicePreferences,
+} from "@/lib/voice/preferences";
 import {
   fetchTutorReply,
   toTurns,
@@ -26,7 +33,9 @@ import { ModelSettings } from "./model-settings";
 import { DisplayToggles, toggleDisplay, type Display } from "./display-toggles";
 import { SetupCard } from "./setup-card";
 import { TutorMessage } from "./tutor-message";
+import { useSpeechInput, useVoiceSupport } from "./use-speech-input";
 import { UserMessage } from "./user-message";
+import { VoiceToggles } from "./voice-toggles";
 
 interface Config {
   scenario: ScenarioId;
@@ -57,10 +66,39 @@ export function SessionView() {
     saveModelSettings(next);
   }
 
+  // Voice: whether replies are spoken, and how fast (saved in this browser).
+  const [voicePrefs, setVoicePrefs] = useState<VoicePreferences>(DEFAULT_VOICE_PREFERENCES);
+  useEffect(() => {
+    // Same reason as the model settings above: localStorage is browser-only.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setVoicePrefs(loadVoicePreferences());
+  }, []);
+  // requestReply is memoised, so it reads the latest choice through a ref.
+  const voicePrefsRef = useRef(voicePrefs);
+  useEffect(() => {
+    voicePrefsRef.current = voicePrefs;
+  }, [voicePrefs]);
+  function updateVoicePrefs(update: (prefs: VoicePreferences) => VoicePreferences) {
+    const next = update(voicePrefsRef.current);
+    voicePrefsRef.current = next; // synchronously current, so a second click sees it
+    setVoicePrefs(next);
+    saveVoicePreferences(next);
+    if (!next.speakReplies) stopSpeaking();
+  }
+  const voiceSupport = useVoiceSupport();
+  // Tap the mic, speak, pause: what was heard is sent like a typed message.
+  const mic = useSpeechInput((text) => send(text));
+
   const abortRef = useRef<AbortController | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => () => abortRef.current?.abort(), []);
+  useEffect(
+    () => () => {
+      abortRef.current?.abort();
+      stopSpeaking();
+    },
+    [],
+  );
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -92,6 +130,9 @@ export function SessionView() {
           ),
           { id: newId(), role: "tutor", reply },
         ]);
+        if (voicePrefsRef.current.speakReplies) {
+          speak(reply.reply_zh, voicePrefsRef.current.speed);
+        }
       } catch (e) {
         if (e instanceof DOMException && e.name === "AbortError") return;
         if (e instanceof TutorRequestError && e.status === 401) {
@@ -108,6 +149,8 @@ export function SessionView() {
 
   function start(scenario: ScenarioId, level: HskLevel) {
     const cfg = { scenario, level };
+    // Tapping Start is the gesture that lets iPhone Safari speak later on.
+    unlockSpeech();
     // Start fetching the pinyin dictionary (~140 KB) in the background while the
     // tutor's first reply loads; it must not block the page itself.
     void import("@/lib/tutor/pinyin");
@@ -118,6 +161,8 @@ export function SessionView() {
 
   function send(text: string) {
     if (!config || loading) return;
+    stopSpeaking(); // don't talk over the learner
+    unlockSpeech();
     const userMessage: UserMessageData = {
       id: newId(),
       role: "user",
@@ -150,6 +195,7 @@ export function SessionView() {
       return;
     }
     abortRef.current?.abort();
+    stopSpeaking();
     router.push("/dashboard");
   }
 
@@ -196,11 +242,14 @@ export function SessionView() {
             End session
           </Button>
         </div>
-        <div className="mx-auto max-w-2xl px-4 pb-2.5">
+        <div className="mx-auto flex max-w-2xl flex-wrap gap-x-4 gap-y-2 px-4 pb-2.5">
           <DisplayToggles
             display={display}
             onToggle={(key) => setDisplay((d) => toggleDisplay(d, key))}
           />
+          {voiceSupport.output && (
+            <VoiceToggles prefs={voicePrefs} onChange={updateVoicePrefs} />
+          )}
         </div>
       </header>
 
@@ -213,7 +262,16 @@ export function SessionView() {
         >
           {messages.map((m) =>
             m.role === "tutor" ? (
-              <TutorMessage key={m.id} reply={m.reply} display={display} />
+              <TutorMessage
+                key={m.id}
+                reply={m.reply}
+                display={display}
+                onSpeak={
+                  voiceSupport.output
+                    ? () => speak(m.reply.reply_zh, voicePrefs.speed)
+                    : undefined
+                }
+              />
             ) : (
               <UserMessage key={m.id} message={m} display={display} />
             ),
@@ -259,7 +317,18 @@ export function SessionView() {
 
       <footer className="shrink-0 border-t border-border/60 bg-background pb-[max(0.75rem,env(safe-area-inset-bottom))]">
         <div className="mx-auto max-w-2xl px-4 pt-3">
-          <ChatInput disabled={loading} onSend={send} />
+          <ChatInput
+            disabled={loading}
+            onSend={send}
+            voice={{
+              supported: mic.supported,
+              ready: voiceSupport.ready,
+              listening: mic.listening,
+              interim: mic.interim,
+              error: mic.error,
+              onToggle: mic.toggle,
+            }}
+          />
         </div>
       </footer>
     </div>
