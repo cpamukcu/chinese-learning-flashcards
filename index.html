@@ -161,6 +161,18 @@
   .lsn-ex .b-hz{font-size:19px}
   @media(max-width:520px){.lsn-lv{margin-left:0}}
 
+  /* Books */
+  .bk-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .bk-pick{display:flex;align-items:center;gap:14px;text-align:left;background:var(--panel);
+    border:1px solid var(--line);border-radius:14px;padding:16px;cursor:pointer;transition:.15s;color:var(--text)}
+  .bk-pick:hover{border-color:var(--accent2);background:var(--panel2)}
+  .bk-emoji{font-size:30px;line-height:1}
+  .bk-reader{max-width:640px;display:flex;flex-direction:column;gap:12px}
+  .bk-para{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;transition:.15s}
+  .bk-para.active{border-color:var(--accent2);box-shadow:0 0 0 2px rgba(240,160,32,.22)}
+  .bk-para .b-hz{font-size:20px}
+  @media(max-width:520px){.bk-grid{grid-template-columns:1fr}}
+
   /* Writing modal */
   .wmodal{position:fixed;inset:0;background:rgba(5,7,12,.78);display:flex;align-items:center;justify-content:center;z-index:50;padding:18px}
   .wmodal[hidden]{display:none}
@@ -206,6 +218,7 @@
     <button data-mode="browse">Browse</button>
     <button data-mode="dialog">Dialogs</button>
     <button data-mode="lesson">Lessons</button>
+    <button data-mode="book">Books</button>
   </nav>
 
   <div class="stds" id="stds"></div>
@@ -573,8 +586,9 @@ const DIALOGS=[
   ]}
 ];
 
-let dlgOpen=null, playing=false, playBtn=null, lsnOpen=null;
+let dlgOpen=null, playing=false, playBtn=null, lsnOpen=null, bkOpen=null;
 let dlgShowPy=true, dlgShowEn=true, dlgRole=null, dlgRevealed=new Set();
+let bkShowPy=true, bkShowEn=true;
 function stopSpeak(){
   playing=false;
   if(window.speechSynthesis)speechSynthesis.cancel();
@@ -767,9 +781,92 @@ function renderDialogs(){
   pb.onclick=()=>{ if(playing)stopSpeak(); else playDialog(d,pb); };
 }
 
+/* ---------- Reading books ---------- */
+const BOOKS=[
+  {emoji:"👨‍👩‍👧",title:"我的家",en:"My Family",lv:"HSK 1",paras:[
+    {hz:"我叫王小明。我家有四个人：爸爸、妈妈、姐姐和我。",py:"Wǒ jiào Wáng Xiǎomíng. Wǒ jiā yǒu sì ge rén: bàba, māma, jiějie hé wǒ.",en:"My name is Wang Xiaoming. There are four people in my family: Dad, Mom, older sister, and me."},
+    {hz:"我爸爸是医生，他每天很忙。",py:"Wǒ bàba shì yīshēng, tā měitiān hěn máng.",en:"My dad is a doctor, he's very busy every day."},
+    {hz:"我妈妈是老师，她喜欢看书。",py:"Wǒ māma shì lǎoshī, tā xǐhuan kàn shū.",en:"My mom is a teacher, she likes reading."},
+    {hz:"我姐姐是学生，她比我大三岁。",py:"Wǒ jiějie shì xuésheng, tā bǐ wǒ dà sān suì.",en:"My older sister is a student, she's three years older than me."},
+    {hz:"我们家有一只猫，它很可爱。",py:"Wǒmen jiā yǒu yì zhī māo, tā hěn kě'ài.",en:"Our family has a cat, it's very cute."},
+    {hz:"我很爱我的家。",py:"Wǒ hěn ài wǒ de jiā.",en:"I love my family very much."}
+  ]},
+  {emoji:"☀️",title:"我的一天",en:"My Day",lv:"HSK 2",paras:[
+    {hz:"今天早上七点，我起床了。",py:"Jīntiān zǎoshang qī diǎn, wǒ qǐ chuáng le.",en:"This morning at seven o'clock, I got up."},
+    {hz:"我先刷牙、洗脸，然后吃早饭。",py:"Wǒ xiān shuā yá, xǐ liǎn, ránhòu chī zǎofàn.",en:"I first brushed my teeth and washed my face, then ate breakfast."},
+    {hz:"八点半，我坐公共汽车去学校。",py:"Bā diǎn bàn, wǒ zuò gōnggòng qìchē qù xuéxiào.",en:"At eight thirty, I took the bus to school."},
+    {hz:"学校里，我们在学习汉语和英语。",py:"Xuéxiào lǐ, wǒmen zài xuéxí Hànyǔ hé Yīngyǔ.",en:"At school, we're studying Chinese and English."},
+    {hz:"下午，我和朋友们一起打篮球，很开心。",py:"Xiàwǔ, wǒ hé péngyoumen yìqǐ dǎ lánqiú, hěn kāixīn.",en:"In the afternoon, my friends and I played basketball together — very happy."},
+    {hz:"晚上我做作业，然后看电视。",py:"Wǎnshang wǒ zuò zuòyè, ránhòu kàn diànshì.",en:"In the evening I do homework, then watch TV."},
+    {hz:"十点，我很累了，就去睡觉了。",py:"Shí diǎn, wǒ hěn lèi le, jiù qù shuì jiào le.",en:"At ten o'clock, I was tired, so I went to sleep."}
+  ]},
+  {emoji:"🏯",title:"北京的周末",en:"A Weekend in Beijing",lv:"HSK 3",paras:[
+    {hz:"上个周末，我和男朋友一起去北京旅游。",py:"Shàng ge zhōumò, wǒ hé nánpéngyou yìqǐ qù Běijīng lǚyóu.",en:"Last weekend, my boyfriend and I traveled to Beijing together."},
+    {hz:"虽然北京的人很多，但是我们还是玩得很开心。",py:"Suīrán Běijīng de rén hěn duō, dànshì wǒmen háishi wán de hěn kāixīn.",en:"Although there were a lot of people in Beijing, we still had a great time."},
+    {hz:"因为天气不错，所以我们决定去长城看看。",py:"Yīnwèi tiānqì búcuò, suǒyǐ wǒmen juédìng qù Chángchéng kànkan.",en:"Because the weather was nice, we decided to go check out the Great Wall."},
+    {hz:"长城真的很长，爬得越高，风景越来越美。",py:"Chángchéng zhēn de hěn cháng, pá de yuè gāo, fēngjǐng yuè lái yuè měi.",en:"The Great Wall is really long — the higher we climbed, the more beautiful the scenery got."},
+    {hz:"晚上，我们在一家小饭馆吃了北京烤鸭，非常好吃。",py:"Wǎnshang, wǒmen zài yì jiā xiǎo fànguǎn chī le Běijīng kǎoyā, fēicháng hǎochī.",en:"In the evening, we ate Peking duck at a small restaurant — it was delicious."},
+    {hz:"这次旅行让我更喜欢中国文化了。",py:"Zhè cì lǚxíng ràng wǒ gèng xǐhuan Zhōngguó wénhuà le.",en:"This trip made me like Chinese culture even more."}
+  ]}
+];
+function playBook(b,btn){
+  if(!window.speechSynthesis)return;
+  stopSpeak();playing=true;playBtn=btn;btn.textContent="■ Stop";
+  const paras=document.querySelectorAll(".bk-reader .bk-para");
+  let i=0;
+  (function step(){
+    if(!playing||i>=b.paras.length){stopSpeak();return;}
+    paras.forEach(p=>p.classList.remove("active"));
+    const p=paras[i];
+    if(p){p.classList.add("active");p.scrollIntoView({block:"center",behavior:"smooth"});}
+    const u=new SpeechSynthesisUtterance(b.paras[i].hz);
+    u.lang="zh-CN";u.rate=.85;
+    const voice=speechSynthesis.getVoices().find(v=>v.lang.startsWith("zh"));
+    if(voice)u.voice=voice;
+    u.onend=()=>{i++;setTimeout(step,500);};
+    u.onerror=()=>{i++;setTimeout(step,500);};
+    speechSynthesis.speak(u);
+  })();
+}
+function renderBooks(){
+  const v=document.getElementById("view");
+  if(bkOpen===null){
+    v.innerHTML=`<div class="bk-grid">`+BOOKS.map((b,i)=>`
+      <button class="bk-pick" data-i="${i}">
+        <div class="bk-emoji">${b.emoji}</div>
+        <div><div class="dlg-t">${b.title}</div><div class="dlg-en">${b.en}</div>
+          <div class="dlg-n"><span class="dlg-lv">${b.lv}</span> · ${b.paras.length} paragraphs</div></div>
+      </button>`).join("")+`</div>`;
+    v.querySelectorAll(".bk-pick").forEach(btn=>btn.onclick=()=>{bkOpen=+btn.dataset.i;renderBooks();});
+    return;
+  }
+  const b=BOOKS[bkOpen];
+  v.innerHTML=`
+    <div class="dlg-bar">
+      <button class="dlg-back" id="bk-back">← All</button>
+      <div class="dlg-title">${b.emoji} ${b.title} · ${b.en}</div>
+      <button class="dlg-play" id="bk-play">▶ Play all</button>
+    </div>
+    <div class="dlg-tools">
+      <button class="dlg-tog ${bkShowPy?'on':''}" id="bk-tg-py">拼音 Pinyin</button>
+      <button class="dlg-tog ${bkShowEn?'on':''}" id="bk-tg-en">English</button>
+    </div>
+    <div class="bk-reader">`+b.paras.map(p=>`
+      <div class="bk-para">
+        <div class="b-hz">${p.hz}<button class="b-spk" data-hz="${p.hz}">🔊</button></div>
+        ${bkShowPy?`<div class="b-py">${p.py}</div>`:``}
+        ${bkShowEn?`<div class="b-en">${p.en}</div>`:``}
+      </div>`).join("")+`</div>`;
+  document.getElementById("bk-back").onclick=()=>{stopSpeak();bkOpen=null;renderBooks();};
+  document.getElementById("bk-tg-py").onclick=()=>{bkShowPy=!bkShowPy;renderBooks();};
+  document.getElementById("bk-tg-en").onclick=()=>{bkShowEn=!bkShowEn;renderBooks();};
+  v.querySelectorAll(".b-spk").forEach(btn=>btn.onclick=e=>{e.stopPropagation();speak(btn.dataset.hz);});
+  const pb=document.getElementById("bk-play");
+  pb.onclick=()=>{ if(playing)stopSpeak(); else playBook(b,pb); };
+}
 /* ---------- Router ---------- */
 function render(){
-  const isDlg=mode==="dialog"||mode==="lesson";
+  const isDlg=mode==="dialog"||mode==="lesson"||mode==="book";
   document.getElementById("stds").style.display=isDlg?"none":"flex";
   document.getElementById("cats").style.display=isDlg?"none":"flex";
   if(!isDlg){renderStds();renderCats();}
@@ -777,6 +874,7 @@ function render(){
   else if(mode==="quiz")renderQuiz();
   else if(mode==="browse")renderBrowse();
   else if(mode==="lesson")renderLessons();
+  else if(mode==="book")renderBooks();
   else renderDialogs();
 }
 document.querySelectorAll("nav button").forEach(b=>{
