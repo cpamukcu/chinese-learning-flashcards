@@ -136,6 +136,24 @@
   .b-en{color:var(--muted);font-size:14px;margin-top:2px}
   @media(max-width:520px){.dlg-grid{grid-template-columns:1fr}}
 
+  /* Lessons */
+  .lsn-grid{display:flex;flex-direction:column;gap:10px}
+  .lsn-pick{display:flex;align-items:center;gap:14px;text-align:left;background:var(--panel);
+    border:1px solid var(--line);border-radius:14px;padding:16px;cursor:pointer;transition:.15s;color:var(--text);width:100%}
+  .lsn-pick:hover{border-color:var(--accent2);background:var(--panel2)}
+  .lsn-num{font-size:13px;font-weight:800;color:var(--accent2);min-width:26px}
+  .lsn-t{font-weight:700;font-size:15px}
+  .lsn-pat{color:var(--accent2);font-size:12px;margin-top:2px;font-family:monospace}
+  .lsn-en{color:var(--muted);font-size:12px;margin-top:2px}
+  .lsn-lv{color:var(--muted);font-size:11px;margin-left:auto;border:1px solid var(--line);border-radius:999px;padding:3px 9px;white-space:nowrap}
+  .lsn-detail{max-width:640px}
+  .lsn-pattern{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:14px 16px;
+    font-family:monospace;font-size:15px;color:var(--accent2);margin-bottom:14px}
+  .lsn-explain{color:var(--text);line-height:1.6;margin-bottom:22px;font-size:14.5px}
+  .lsn-ex{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:10px}
+  .lsn-ex .b-hz{font-size:19px}
+  @media(max-width:520px){.lsn-lv{margin-left:0}}
+
   /* Writing modal */
   .wmodal{position:fixed;inset:0;background:rgba(5,7,12,.78);display:flex;align-items:center;justify-content:center;z-index:50;padding:18px}
   .wmodal[hidden]{display:none}
@@ -180,6 +198,7 @@
     <button data-mode="quiz">Quiz</button>
     <button data-mode="browse">Browse</button>
     <button data-mode="dialog">Dialogs</button>
+    <button data-mode="lesson">Lessons</button>
   </nav>
 
   <div class="stds" id="stds"></div>
@@ -547,7 +566,7 @@ const DIALOGS=[
   ]}
 ];
 
-let dlgOpen=null, playing=false, playBtn=null;
+let dlgOpen=null, playing=false, playBtn=null, lsnOpen=null;
 let dlgShowPy=true, dlgShowEn=true, dlgRole=null, dlgRevealed=new Set();
 function stopSpeak(){
   playing=false;
@@ -573,6 +592,128 @@ function playDialog(d,btn){
     u.onerror=()=>{i++;setTimeout(step,450);};
     speechSynthesis.speak(u);
   })();
+}
+/* ---------- Grammar lessons ---------- */
+const LESSONS=[
+  {cn:"了 (le)",en:"Completed Actions & Change",lv:"HSK 2",pattern:"Verb + 了",
+   explain:"Put 了 right after a verb to show the action is completed, or at the end of a sentence to show a new situation. It is NOT a past-tense marker — it's about completion or change, so it can show up in future or present-time sentences too, and past-time sentences don't always need it.",
+   examples:[
+     {hz:"我吃了早饭。",py:"Wǒ chī le zǎofàn.",en:"I ate breakfast."},
+     {hz:"他买了三本书。",py:"Tā mǎi le sān běn shū.",en:"He bought three books."},
+     {hz:"天冷了。",py:"Tiān lěng le.",en:"It's gotten cold. (a change — not a completed action)"}
+   ]},
+  {cn:"在 / 正在",en:"Actions in Progress",lv:"HSK 2",pattern:"(正)在 + Verb (+ 呢)",
+   explain:"Shows an action is happening right now, like English \"-ing\". 在 and 正在 mean the same thing — 正在 is slightly more formal. Adding 呢 at the end makes it feel more conversational.",
+   examples:[
+     {hz:"我在吃饭呢。",py:"Wǒ zài chī fàn ne.",en:"I'm eating right now."},
+     {hz:"她正在写作业。",py:"Tā zhèngzài xiě zuòyè.",en:"She's doing homework."},
+     {hz:"你在干什么？",py:"Nǐ zài gàn shénme?",en:"What are you doing?"}
+   ]},
+  {cn:"比 (bǐ)",en:"Comparisons",lv:"HSK 2",pattern:"A + 比 + B + Adjective",
+   explain:"The standard way to compare two things directly — \"A is more [adjective] than B\". Add a number or amount after the adjective to say by how much.",
+   examples:[
+     {hz:"我比他高。",py:"Wǒ bǐ tā gāo.",en:"I'm taller than him."},
+     {hz:"今天比昨天冷。",py:"Jīntiān bǐ zuótiān lěng.",en:"Today is colder than yesterday."},
+     {hz:"这个比那个贵一点。",py:"Zhège bǐ nàge guì yìdiǎn.",en:"This one is a bit more expensive than that one."}
+   ]},
+  {cn:"的 / 得 / 地",en:"The Three \"de\"s",lv:"HSK 2",pattern:"的 + Noun · Verb/Adj + 得 · Adverb + 地 + Verb",
+   explain:"All three are pronounced \"de\" but do different jobs. 的 attaches a description to a noun (\"my cat\"). 得 attaches a result or degree to a verb or adjective (\"runs fast\"). 地 attaches an adverb to the verb it's modifying (\"smiled happily\").",
+   examples:[
+     {hz:"我的猫很可爱。",py:"Wǒ de māo hěn kě'ài.",en:"My cat is very cute."},
+     {hz:"他跑得很快。",py:"Tā pǎo de hěn kuài.",en:"He runs very fast."},
+     {hz:"她高兴地笑了。",py:"Tā gāoxìng de xiào le.",en:"She smiled happily."}
+   ]},
+  {cn:"把 (bǎ)",en:"The 把 Construction",lv:"HSK 3",pattern:"Subject + 把 + Object + Verb + Extra",
+   explain:"Moves the object in front of the verb to emphasize what happens TO it — common when something is being moved, changed, or finished off. The verb almost always needs something extra after it (了, a location, a result) — it can't stand alone.",
+   examples:[
+     {hz:"请把门关上。",py:"Qǐng bǎ mén guān shàng.",en:"Please close the door."},
+     {hz:"我把作业做完了。",py:"Wǒ bǎ zuòyè zuò wán le.",en:"I finished the homework."},
+     {hz:"他把书放在桌子上。",py:"Tā bǎ shū fàng zài zhuōzi shàng.",en:"He put the book on the table."}
+   ]},
+  {cn:"是...的",en:"Emphasizing Time, Place & Manner",lv:"HSK 3",pattern:"Subject + 是 + [time/place/manner] + Verb + 的",
+   explain:"Used for something that already happened, to highlight HOW, WHEN, or WHERE it happened — not whether it happened. 是 is often dropped in casual speech, but 的 stays.",
+   examples:[
+     {hz:"我是昨天到的。",py:"Wǒ shì zuótiān dào de.",en:"I arrived yesterday. (emphasizing when)"},
+     {hz:"你是怎么来的？",py:"Nǐ shì zěnme lái de?",en:"How did you get here? (emphasizing how)"},
+     {hz:"这是在北京买的。",py:"Zhè shì zài Běijīng mǎi de.",en:"This was bought in Beijing. (emphasizing where)"}
+   ]},
+  {cn:"V + 得 + Adj",en:"Complement of Degree",lv:"HSK 3",pattern:"Verb + 得 + (很) + Adjective",
+   explain:"Describes how well, how fast, or to what degree an action is done — the extra description comes right after the verb using 得.",
+   examples:[
+     {hz:"她说得很好。",py:"Tā shuō de hěn hǎo.",en:"She speaks very well."},
+     {hz:"我昨天睡得不好。",py:"Wǒ zuótiān shuì de bù hǎo.",en:"I didn't sleep well last night."},
+     {hz:"你写得太慢了。",py:"Nǐ xiě de tài màn le.",en:"You write too slowly."}
+   ]},
+  {cn:"虽然...但是",en:"Although... But...",lv:"HSK 3",pattern:"虽然 + Clause 1, 但是 + Clause 2",
+   explain:"States a fact, then contrasts it with something unexpected. 虽然 can be dropped in casual speech, but 但是 usually stays to signal the contrast.",
+   examples:[
+     {hz:"虽然很贵，但是我还是买了。",py:"Suīrán hěn guì, dànshì wǒ háishi mǎi le.",en:"Although it's expensive, I bought it anyway."},
+     {hz:"他虽然很忙，但是每天都锻炼。",py:"Tā suīrán hěn máng, dànshì měitiān dōu duànliàn.",en:"Although he's busy, he exercises every day."},
+     {hz:"虽然下雨，但是我们还是出去了。",py:"Suīrán xià yǔ, dànshì wǒmen háishi chūqù le.",en:"Although it was raining, we went out anyway."}
+   ]},
+  {cn:"因为...所以",en:"Because... So...",lv:"HSK 2",pattern:"因为 + Reason, 所以 + Result",
+   explain:"The standard cause-and-effect structure. In spoken Chinese either half can be dropped if the meaning is already clear from context.",
+   examples:[
+     {hz:"因为下雨，所以我没去。",py:"Yīnwèi xià yǔ, suǒyǐ wǒ méi qù.",en:"Because it rained, I didn't go."},
+     {hz:"因为他很累，所以早睡了。",py:"Yīnwèi tā hěn lèi, suǒyǐ zǎo shuì le.",en:"Because he was tired, he went to bed early."},
+     {hz:"我没吃饭，因为没时间。",py:"Wǒ méi chī fàn, yīnwèi méi shíjiān.",en:"I didn't eat, because I had no time."}
+   ]},
+  {cn:"一边...一边",en:"Doing Two Things at Once",lv:"HSK 3",pattern:"一边 + Verb 1 + 一边 + Verb 2",
+   explain:"Describes two actions happening at the same time, done by the same person.",
+   examples:[
+     {hz:"我一边吃饭一边看电视。",py:"Wǒ yìbiān chī fàn yìbiān kàn diànshì.",en:"I eat while watching TV."},
+     {hz:"她一边走一边打电话。",py:"Tā yìbiān zǒu yìbiān dǎ diànhuà.",en:"She walks while talking on the phone."},
+     {hz:"他们一边唱歌一边跳舞。",py:"Tāmen yìbiān chàng gē yìbiān tiào wǔ.",en:"They sing while dancing."}
+   ]},
+  {cn:"又...又",en:"Both... And...",lv:"HSK 3",pattern:"又 + Adjective/Verb 1 + 又 + Adjective/Verb 2",
+   explain:"Links two qualities or actions that are both true at the same time — usually two adjectives describing the same subject.",
+   examples:[
+     {hz:"这个菜又好吃又便宜。",py:"Zhège cài yòu hǎochī yòu piányi.",en:"This dish is both delicious and cheap."},
+     {hz:"她又聪明又漂亮。",py:"Tā yòu cōngming yòu piàoliang.",en:"She's both smart and pretty."},
+     {hz:"今天又热又累。",py:"Jīntiān yòu rè yòu lèi.",en:"Today is both hot and tiring."}
+   ]},
+  {cn:"越来越",en:"More and More",lv:"HSK 3",pattern:"越来越 + Adjective/Verb",
+   explain:"Describes something changing progressively over time — \"more and more...\" or \"increasingly...\".",
+   examples:[
+     {hz:"天气越来越冷了。",py:"Tiānqì yuè lái yuè lěng le.",en:"The weather is getting colder and colder."},
+     {hz:"他的中文越来越好。",py:"Tā de Zhōngwén yuè lái yuè hǎo.",en:"His Chinese is getting better and better."},
+     {hz:"我越来越喜欢北京了。",py:"Wǒ yuè lái yuè xǐhuan Běijīng le.",en:"I like Beijing more and more."}
+   ]}
+];
+function renderLessons(){
+  const v=document.getElementById("view");
+  if(lsnOpen===null){
+    v.innerHTML=`<div class="lsn-grid">`+LESSONS.map((l,i)=>`
+      <button class="lsn-pick" data-i="${i}">
+        <div class="lsn-num">${i+1}</div>
+        <div style="flex:1">
+          <div class="lsn-t">${l.cn} <span style="color:var(--muted);font-weight:400">— ${l.en}</span></div>
+          <div class="lsn-pat">${l.pattern}</div>
+        </div>
+        <div class="lsn-lv">${l.lv}</div>
+      </button>`).join("")+`</div>`;
+    v.querySelectorAll(".lsn-pick").forEach(b=>b.onclick=()=>{lsnOpen=+b.dataset.i;renderLessons();});
+    return;
+  }
+  const l=LESSONS[lsnOpen];
+  v.innerHTML=`
+    <div class="dlg-bar">
+      <button class="dlg-back" id="lsn-back">← All</button>
+      <div class="dlg-title">${l.cn} · ${l.en}</div>
+      <span class="lsn-lv">${l.lv}</span>
+    </div>
+    <div class="lsn-detail">
+      <div class="lsn-pattern">${l.pattern}</div>
+      <div class="lsn-explain">${l.explain}</div>
+      ${l.examples.map(ex=>`
+        <div class="lsn-ex">
+          <div class="b-hz">${ex.hz}<button class="b-spk" data-hz="${ex.hz}">🔊</button></div>
+          <div class="b-py">${ex.py}</div>
+          <div class="b-en">${ex.en}</div>
+        </div>`).join("")}
+    </div>`;
+  document.getElementById("lsn-back").onclick=()=>{lsnOpen=null;renderLessons();};
+  v.querySelectorAll(".b-spk").forEach(b=>b.onclick=e=>{e.stopPropagation();speak(b.dataset.hz);});
 }
 function renderDialogs(){
   const v=document.getElementById("view");
@@ -621,13 +762,14 @@ function renderDialogs(){
 
 /* ---------- Router ---------- */
 function render(){
-  const isDlg=mode==="dialog";
+  const isDlg=mode==="dialog"||mode==="lesson";
   document.getElementById("stds").style.display=isDlg?"none":"flex";
   document.getElementById("cats").style.display=isDlg?"none":"flex";
   if(!isDlg){renderStds();renderCats();}
   if(mode==="flash"){startFlash();renderFlash();}
   else if(mode==="quiz")renderQuiz();
   else if(mode==="browse")renderBrowse();
+  else if(mode==="lesson")renderLessons();
   else renderDialogs();
 }
 document.querySelectorAll("nav button").forEach(b=>{
